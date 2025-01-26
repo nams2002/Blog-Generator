@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Blog Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8">Advanced AI Blog Generator</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">Input</h2>
+                <form id="generateForm">
+                    <div class="mb-4">
+                        <label class="block mb-2">Topic</label>
+                        <textarea id="topic" class="w-full p-2 border rounded" rows="4" required></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block mb-2">Length</label>
+                        <select id="length" class="w-full p-2 border rounded">
+                            <option value="short">Short (~300 words)</option>
+                            <option value="medium">Medium (~600 words)</option>
+                            <option value="long">Long (~1000 words)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                        Generate Content
+                    </button>
+                </form>
+            </div>
+            
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">Output</h2>
+                <div id="loading" class="hidden">
+                    <p class="text-gray-600">Generating content...</p>
+                </div>
+                <div id="keywords" class="mb-4"></div>
+                <div id="outline" class="mb-4"></div>
+                <div id="content" class="prose max-w-none"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('generateForm').onsubmit = async (e) => {
+            e.preventDefault();
+            
+            // Show loading state
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('content').innerHTML = '';
+            document.getElementById('keywords').innerHTML = '';
+            document.getElementById('outline').innerHTML = '';
+            
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        topic: document.getElementById('topic').value,
+                        length: document.getElementById('length').value
+                    })
+                });
+                
+                const data = await response.json();
+                
+                document.getElementById('keywords').innerHTML = `
+                    <h3 class="font-semibold">Keywords:</h3>
+                    <div class="flex gap-2 flex-wrap mt-2">
+                        ${data.keywords.map(k => `<span class="bg-gray-200 px-2 py-1 rounded">${k}</span>`).join('')}
+                    </div>
+                `;
+                
+                document.getElementById('outline').innerHTML = `
+                    <h3 class="font-semibold mt-4">Outline:</h3>
+                    <ul class="list-disc pl-4 mt-2">
+                        ${data.outline.map(item => `<li>${item}</li>`).join('')}
+                    </ul>
+                `;
+                
+                document.getElementById('content').innerHTML = data.content;
+            } catch (error) {
+                document.getElementById('content').innerHTML = `<p class="text-red-500">Error generating content: ${error}</p>`;
+            } finally {
+                document.getElementById('loading').classList.add('hidden');
+            }
+        };
+    </script>
+</body>
+</html>
